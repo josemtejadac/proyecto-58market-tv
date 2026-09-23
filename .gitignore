@@ -1,0 +1,26 @@
+# Node
+node_modules/
+npm-debug.log*
+.env
+
+# Uploads locales (no versionar archivos subidos)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Build outputs
+dist/
+build/
+
+# Flutter / Android (para cuando agreguemos player-app)
+player-app/.dart_tool/
+player-app/.flutter-plugins
+player-app/.flutter-plugins-dependencies
+player-app/build/
+player-app/android/.gradle/
+player-app/android/local.properties
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

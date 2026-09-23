@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: signage_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: signage
+      POSTGRES_PASSWORD: signage_pass
+      POSTGRES_DB: digital_signage
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signage -d digital_signage"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: signage_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: postgres://signage:signage_pass@db:5432/digital_signage
+      JWT_SECRET: cambia-esto-por-un-secreto-largo-y-aleatorio
+      JWT_EXPIRES_IN: 7d
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: cambia-esta-clave
+      UPLOAD_DIR: uploads
+      MAX_UPLOAD_MB: 200
+      CORS_ORIGIN: "*"
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "4000:4000"
+
+volumes:
+  pgdata:
+  uploads_data:
