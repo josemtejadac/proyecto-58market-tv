@@ -12,9 +12,14 @@ const { query } = require('../config/db');
  */
 async function getContenidoActual(pantallaId) {
   const now = new Date();
-  const hoyISO = now.toISOString().slice(0, 10); // YYYY-MM-DD
-  const horaActual = now.toTimeString().slice(0, 8); // HH:MM:SS
-  const diaSemana = now.getDay(); // 0=domingo ... 6=sabado
+  // OJO: no usar now.toISOString() para la fecha de "hoy": toISOString() siempre
+  // devuelve la fecha en UTC, lo cual queda desfasado un dia en zonas horarias
+  // detras de UTC (America/Santiago, etc.) durante las horas de la noche.
+  // getFullYear/getMonth/getDate usan la zona horaria local del proceso (TZ).
+  const pad = (n) => String(n).padStart(2, '0');
+  const hoyISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const horaActual = now.toTimeString().slice(0, 8); // HH:MM:SS (hora local)
+  const diaSemana = now.getDay(); // 0=domingo ... 6=sabado (local)
 
   const { rows: programaciones } = await query(
     `SELECT *

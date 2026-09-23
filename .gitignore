@@ -19,6 +19,9 @@ player-app/build/
 player-app/android/.gradle/
 player-app/android/local.properties
 
+# Logs de scripts locales
+scripts/auto-update.log
+
 # Editor / OS
 .vscode/
 .idea/

@@ -164,11 +164,23 @@ function PreviewBox({ preview }) {
 
   return (
     <div>
-      <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="relative aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
         {item.tipo === 'video' ? (
           <video src={url} className="w-full h-full object-contain" controls muted autoPlay loop />
         ) : (
-          <img src={url} alt={item.nombre} className="w-full h-full object-contain" />
+          <>
+            <img
+              src={url}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60"
+            />
+            <img
+              src={url}
+              alt={item.nombre}
+              className="relative w-full h-full object-contain"
+            />
+          </>
         )}
       </div>
       <p className="text-xs text-slate-400 mt-2">
@@ -191,6 +203,15 @@ function ProgramacionModal({ pantallaId, programacion, onClose, onGuardada }) {
   const [dias, setDias] = useState(programacion?.dias_semana || [0, 1, 2, 3, 4, 5, 6]);
   const [prioridad, setPrioridad] = useState(programacion?.prioridad ?? 0);
   const [activo, setActivo] = useState(programacion?.activo ?? true);
+  const tieneRestricciones = Boolean(
+    programacion &&
+      (programacion.fecha_inicio ||
+        programacion.fecha_fin ||
+        programacion.hora_inicio ||
+        programacion.hora_fin ||
+        (programacion.dias_semana && programacion.dias_semana.length < 7))
+  );
+  const [mostrarSiempre, setMostrarSiempre] = useState(!tieneRestricciones);
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
 
@@ -210,7 +231,7 @@ function ProgramacionModal({ pantallaId, programacion, onClose, onGuardada }) {
       setError('Selecciona una playlist o un contenido');
       return;
     }
-    if (dias.length === 0) {
+    if (!mostrarSiempre && dias.length === 0) {
       setError('Selecciona al menos un dia de la semana');
       return;
     }
@@ -221,11 +242,11 @@ function ProgramacionModal({ pantallaId, programacion, onClose, onGuardada }) {
       playlist_id: tipoOrigen === 'playlist' ? origenId : null,
       contenido_id: tipoOrigen === 'contenido' ? origenId : null,
       nombre: nombre || null,
-      fecha_inicio: fechaInicio || null,
-      fecha_fin: fechaFin || null,
-      hora_inicio: horaInicio || null,
-      hora_fin: horaFin || null,
-      dias_semana: dias,
+      fecha_inicio: mostrarSiempre ? null : fechaInicio || null,
+      fecha_fin: mostrarSiempre ? null : fechaFin || null,
+      hora_inicio: mostrarSiempre ? null : horaInicio || null,
+      hora_fin: mostrarSiempre ? null : horaFin || null,
+      dias_semana: mostrarSiempre ? [0, 1, 2, 3, 4, 5, 6] : dias,
       prioridad: Number(prioridad) || 0,
       activo,
     };
@@ -296,62 +317,75 @@ function ProgramacionModal({ pantallaId, programacion, onClose, onGuardada }) {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Fecha inicio (opcional)</label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Fecha fin (opcional)</label>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Hora inicio (opcional)</label>
-            <input
-              type="time"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
-              className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Hora fin (opcional)</label>
-            <input
-              type="time"
-              value={horaFin}
-              onChange={(e) => setHoraFin(e.target.value)}
-              className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
-            />
-          </div>
-        </div>
+        <label className="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={mostrarSiempre}
+            onChange={(e) => setMostrarSiempre(e.target.checked)}
+          />
+          <span className="text-sm text-white">Mostrar siempre (activar de inmediato, todos los dias y horas)</span>
+        </label>
 
-        <div>
-          <label className="block text-sm text-slate-300 mb-2">Dias de la semana</label>
-          <div className="flex gap-1.5 flex-wrap">
-            {DIAS.map((label, idx) => (
-              <button
-                type="button"
-                key={label}
-                onClick={() => toggleDia(idx)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                  dias.includes(idx) ? 'bg-brand-600 text-white' : 'bg-slate-700 text-slate-300'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {!mostrarSiempre && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Fecha inicio (opcional)</label>
+                <input
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Fecha fin (opcional)</label>
+                <input
+                  type="date"
+                  value={fechaFin}
+                  onChange={(e) => setFechaFin(e.target.value)}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Hora inicio (opcional)</label>
+                <input
+                  type="time"
+                  value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Hora fin (opcional)</label>
+                <input
+                  type="time"
+                  value={horaFin}
+                  onChange={(e) => setHoraFin(e.target.value)}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-300 mb-2">Dias de la semana</label>
+              <div className="flex gap-1.5 flex-wrap">
+                {DIAS.map((label, idx) => (
+                  <button
+                    type="button"
+                    key={label}
+                    onClick={() => toggleDia(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                      dias.includes(idx) ? 'bg-brand-600 text-white' : 'bg-slate-700 text-slate-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="grid grid-cols-2 gap-4 items-end">
           <div>

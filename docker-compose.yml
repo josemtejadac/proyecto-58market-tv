@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: signage
-      POSTGRES_PASSWORD: signage_pass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-signage_pass}
       POSTGRES_DB: digital_signage
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -27,13 +27,14 @@ services:
       db:
         condition: service_healthy
     environment:
+      TZ: America/Santiago
       PORT: 4000
       NODE_ENV: production
-      DATABASE_URL: postgres://signage:signage_pass@db:5432/digital_signage
-      JWT_SECRET: cambia-esto-por-un-secreto-largo-y-aleatorio
+      DATABASE_URL: postgres://signage:${POSTGRES_PASSWORD:-signage_pass}@db:5432/digital_signage
+      JWT_SECRET: ${JWT_SECRET:-cambia-esto-por-un-secreto-largo-y-aleatorio}
       JWT_EXPIRES_IN: 7d
-      ADMIN_USER: admin
-      ADMIN_PASSWORD: cambia-esta-clave
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-cambia-esta-clave}
       UPLOAD_DIR: uploads
       MAX_UPLOAD_MB: 200
       CORS_ORIGIN: "*"

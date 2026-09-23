@@ -73,6 +73,8 @@ class _SetupScreenState extends State<SetupScreen> {
                 TextField(
                   controller: _controller,
                   autofocus: true,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _probando ? null : _conectar(),
                   style: const TextStyle(color: Colors.white, fontSize: 18),
                   decoration: InputDecoration(
                     labelText: 'URL del backend',

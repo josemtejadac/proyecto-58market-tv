@@ -57,7 +57,7 @@ async function crear(req, res, next) {
     const { rows } = await query(
       `INSERT INTO programaciones
         (pantalla_id, playlist_id, contenido_id, nombre, fecha_inicio, fecha_fin, hora_inicio, hora_fin, dias_semana, prioridad, activo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE($9, '{0,1,2,3,4,5,6}'), COALESCE($10, 0), COALESCE($11, true))
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE($9::smallint[], '{0,1,2,3,4,5,6}'::smallint[]), COALESCE($10, 0), COALESCE($11, true))
        RETURNING *`,
       [
         pantallaId,

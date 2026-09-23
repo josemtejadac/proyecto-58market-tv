@@ -11,7 +11,7 @@
     <application
         android:label="58 Market TV"
         android:name="${applicationName}"
-        android:banner="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

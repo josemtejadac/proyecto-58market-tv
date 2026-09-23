@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -81,31 +82,74 @@ class _ContentViewState extends State<ContentView> {
       if (controller == null || !controller.value.isInitialized) {
         return const ColoredBox(color: Colors.black);
       }
+      // Nota: usar el mismo controller en dos VideoPlayer no duplica la
+      // decodificacion (ambos apuntan a la misma textura), asi que el fondo
+      // desenfocado no cuesta un segundo video corriendo en paralelo.
       return Container(
         color: Colors.black,
-        child: Center(
-          child: AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: VideoPlayer(controller),
-          ),
+        width: double.infinity,
+        height: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
+                ),
+              ),
+            ),
+            Container(color: Colors.black.withValues(alpha: 0.25)),
+            Center(
+              child: AspectRatio(
+                aspectRatio: controller.value.aspectRatio,
+                child: VideoPlayer(controller),
+              ),
+            ),
+          ],
         ),
       );
     }
 
     return Container(
       color: Colors.black,
-      child: Center(
-        child: Image.file(
-          widget.file,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _avanzarUnaVez();
-              widget.onError?.call();
-            });
-            return const SizedBox.shrink();
-          },
-        ),
+      width: double.infinity,
+      height: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fondo: la misma imagen ampliada y desenfocada, para rellenar
+          // los bordes sin dejar barras negras cuando la foto es vertical.
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: Image.file(
+              widget.file,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+            ),
+          ),
+          Container(color: Colors.black.withValues(alpha: 0.25)),
+          // Primer plano: la imagen completa, sin recortar.
+          Center(
+            child: Image.file(
+              widget.file,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _avanzarUnaVez();
+                  widget.onError?.call();
+                });
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
