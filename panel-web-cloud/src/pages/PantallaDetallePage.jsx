@@ -398,8 +398,15 @@ function ProgramacionModal({ pantallaId, programacion, onClose, onGuardada }) {
               onChange={(e) => setPrioridad(e.target.value)}
               className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Si tienes varias programaciones que coinciden en el mismo momento, gana la de
+              numero mas alto. Con una sola programacion, no importa.
+            </p>
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-300 pb-2">
+          <label
+            className="flex items-center gap-2 text-sm text-slate-300 pb-2"
+            title="Si la desmarcas, esta programacion se ignora por completo (como pausarla) sin tener que borrarla."
+          >
             <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
             Activa
           </label>

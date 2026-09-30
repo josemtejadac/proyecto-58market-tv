@@ -112,6 +112,11 @@ function PlaylistModal({ playlist, onClose, onGuardada }) {
     setSeleccionados((prev) => prev.filter((s) => s.id !== contenidoId));
   }
 
+  async function actualizarDuracion(contenido, duracion) {
+    const { data } = await contenidosApi.actualizar(contenido.id, { duracion_segundos: duracion });
+    setSeleccionados((prev) => prev.map((s) => (s.id === contenido.id ? { ...s, ...data } : s)));
+  }
+
   function onDragStart(idx) {
     setDragIdx(idx);
   }
@@ -199,10 +204,24 @@ function PlaylistModal({ playlist, onClose, onGuardada }) {
                   onDragEnd={() => setDragIdx(null)}
                   className="flex items-center justify-between px-3 py-2 text-sm text-slate-200 bg-slate-800 cursor-move"
                 >
-                  <span className="truncate">
+                  <span className="truncate flex-1">
                     {idx + 1}. {c.nombre}
                   </span>
-                  <button type="button" onClick={() => quitar(c.id)} className="text-red-400 hover:text-red-300 text-xs">
+                  {c.tipo === 'imagen' && (
+                    <span className="flex items-center gap-1 shrink-0 mr-2">
+                      <input
+                        type="number"
+                        min={1}
+                        defaultValue={c.duracion_segundos}
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onBlur={(e) => actualizarDuracion(c, Number(e.target.value) || 10)}
+                        className="w-12 text-xs rounded bg-slate-900 border border-slate-600 px-1 py-0.5 text-white"
+                      />
+                      <span className="text-xs text-slate-500">seg.</span>
+                    </span>
+                  )}
+                  <button type="button" onClick={() => quitar(c.id)} className="text-red-400 hover:text-red-300 text-xs shrink-0">
                     Quitar
                   </button>
                 </div>

@@ -13,6 +13,7 @@ export default function ContenidosPage() {
   const [subiendo, setSubiendo] = useState(false);
   const [progreso, setProgreso] = useState(0);
   const [arrastrando, setArrastrando] = useState(false);
+  const [estadoGuardado, setEstadoGuardado] = useState({});
   const inputRef = useRef(null);
 
   async function cargar() {
@@ -61,8 +62,17 @@ export default function ContenidosPage() {
   }
 
   async function actualizarDuracion(c, duracion) {
-    const { data } = await contenidosApi.actualizar(c.id, { duracion_segundos: duracion });
-    setContenidos((prev) => prev.map((x) => (x.id === c.id ? data : x)));
+    setEstadoGuardado((prev) => ({ ...prev, [c.id]: 'guardando' }));
+    try {
+      const { data } = await contenidosApi.actualizar(c.id, { duracion_segundos: duracion });
+      setContenidos((prev) => prev.map((x) => (x.id === c.id ? data : x)));
+      setEstadoGuardado((prev) => ({ ...prev, [c.id]: 'guardado' }));
+      setTimeout(() => {
+        setEstadoGuardado((prev) => ({ ...prev, [c.id]: undefined }));
+      }, 1500);
+    } catch (err) {
+      setEstadoGuardado((prev) => ({ ...prev, [c.id]: 'error' }));
+    }
   }
 
   return (
@@ -118,7 +128,7 @@ export default function ContenidosPage() {
                 </p>
                 <p className="text-xs text-slate-500 mb-2 capitalize">{c.tipo}</p>
                 {c.tipo === 'imagen' && (
-                  <div className="flex items-center gap-1 mb-2">
+                  <div className="flex items-center gap-1.5 mb-2">
                     <input
                       type="number"
                       min={1}
@@ -127,6 +137,15 @@ export default function ContenidosPage() {
                       className="w-16 text-xs rounded bg-slate-900 border border-slate-600 px-2 py-1 text-white"
                     />
                     <span className="text-xs text-slate-500">seg.</span>
+                    {estadoGuardado[c.id] === 'guardando' && (
+                      <span className="text-xs text-slate-400">Guardando...</span>
+                    )}
+                    {estadoGuardado[c.id] === 'guardado' && (
+                      <span className="text-xs text-green-400">Guardado ✓</span>
+                    )}
+                    {estadoGuardado[c.id] === 'error' && (
+                      <span className="text-xs text-red-400">Error al guardar</span>
+                    )}
                   </div>
                 )}
                 <button onClick={() => eliminar(c)} className="text-xs text-red-400 hover:text-red-300">
