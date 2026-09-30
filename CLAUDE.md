@@ -36,9 +36,10 @@ pasar por Express/Socket.io ni por una PC prendida en la tienda.
    (login, RLS, pairing) contra la base real via curl. Compila limpio.
 5. **`player-app-cloud/`** — Copia de `player-app/` adaptada a Supabase (`applicationId`
    distinto: `com.market58tv.signage_player_cloud`, para poder instalarla junto a la version
-   local en la misma TV sin pisarla). Compila limpio y pasa `flutter analyze`, pero **todavía
-   no se probó en un dispositivo real** (la TV de pruebas no estaba alcanzable por red la
-   última vez que se intentó).
+   local en la misma TV sin pisarla). **Probada de punta a punta en la TV real** (UnionTV,
+   192.168.1.114): emparejamiento, notificacion en tiempo real, descarga y reproduccion de
+   contenido — todo funciono correctamente el 2026-09-30. Sigue instalada en esa TV junto a
+   la version local para referencia.
 6. **Base de datos**: proyecto Supabase compartido "Base de datos Proyectos varios"
    (`project_id: wiuuzsiiaagqldtxfouj`, org "SpotGo", plan Pro), tablas con prefijo
    `market58_` (NO es un proyecto Supabase aparte — así no cuesta nada extra del plan, ver mas
@@ -47,10 +48,11 @@ pasar por Express/Socket.io ni por una PC prendida en la tienda.
 7. El usuario mencionó que **esto se va a mover a otro proyecto/repo más adelante** — por ahora
    vive junto a la version local en el mismo repo.
 
-**Antes de dar por "lista" la version B**: falta probarla en una TV real de punta a punta
-(emparejar, subir contenido, verificar que se reproduce), y decidir con el usuario si/cuándo
-migrar la operación real de la tienda a esta arquitectura. No asumir que ya reemplazó a la
-version A sin confirmar con el usuario.
+**La version B ya esta probada tecnicamente end-to-end** (ver arriba). Falta: que el usuario
+decida si/cuándo migrar la operación real de la tienda a esta arquitectura, y reescribir el
+panel-web-cloud con drag&drop de playlists igual de completo que el local (tiene lo esencial
+pero no se re-verificó cada detalle de UI tras el rewrite). No asumir que ya reemplazó a la
+version A en producción sin confirmar con el usuario.
 
 ### Decisiones importantes tomadas (no revertir sin preguntar)
 
