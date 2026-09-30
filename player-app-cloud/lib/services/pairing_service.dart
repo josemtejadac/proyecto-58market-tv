@@ -34,10 +34,13 @@ class PairingService {
   }
 
   Future<void> actualizarEstado(String id, {required String estado}) async {
-    await _client.from('market58_pantallas').update({
-      'estado': estado,
-      'ultima_conexion': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id);
+    // Usa una funcion segura (RPC) en vez de UPDATE directo: la TV no esta
+    // autenticada como admin, y las politicas de RLS no le permiten editar
+    // la fila directamente (por diseno, para que no pueda tocar otros campos).
+    await _client.rpc('market58_actualizar_estado_pantalla', params: {
+      'p_id': id,
+      'p_estado': estado,
+    });
   }
 
   /// Escucha cambios en la fila de esta pantalla (ej. cuando se empareja).
