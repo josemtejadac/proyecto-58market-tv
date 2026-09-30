@@ -28,6 +28,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   List<ContenidoItem> _items = [];
   int _index = 0;
+  // Se incrementa cada vez que se muestra un item, incluso si es el mismo
+  // que antes (ej. una playlist de un solo video que se repite). Va en la
+  // key del widget para forzar que Flutter lo recree y el video arranque
+  // de nuevo en vez de quedar congelado en el ultimo frame.
+  int _reproduccionId = 0;
   File? _archivoActual;
   bool _cargandoItem = false;
 
@@ -49,7 +54,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _cargarContenidoActual();
 
     // Respaldo por si se pierde un evento de realtime: refresca cada 60s.
-    _pollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       _cargarContenidoActual();
       _pairing.actualizarEstado(widget.pantallaId, estado: 'online');
     });
@@ -84,6 +89,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
 
+    _reproduccionId += 1;
     setState(() => _cargandoItem = true);
     final item = _items[_index];
     final file = await _cache.ensureCached(item);
@@ -140,7 +146,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final item = _items[_index];
 
     return ContentView(
-      key: ValueKey('${item.id}-$_index'),
+      key: ValueKey('${item.id}-$_index-$_reproduccionId'),
       file: _archivoActual!,
       tipo: item.tipo,
       onFinished: _siguiente,

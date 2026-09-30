@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { contenidosApi } from '../api/resources';
 import { getApiUrl } from '../config';
+import { detectarCodecVideo, MENSAJE_CODEC_RIESGOSO } from '../lib/videoCodec';
 
 export default function ContenidosPage() {
   const [contenidos, setContenidos] = useState([]);
@@ -27,6 +28,24 @@ export default function ContenidosPage() {
   const subirArchivos = useCallback(async (files) => {
     setSubiendo(true);
     for (const file of Array.from(files)) {
+      if (file.type.startsWith('video/')) {
+        setProgreso(-1);
+        // eslint-disable-next-line no-await-in-loop
+        const codec = await detectarCodecVideo(file);
+        if (MENSAJE_CODEC_RIESGOSO[codec]) {
+          const seguir = window.confirm(
+            `⚠️ "${file.name}"\n\n${MENSAJE_CODEC_RIESGOSO[codec]}\n\n` +
+              'Te recomendamos arreglarlo antes de subirlo: es gratis y facil con el programa HandBrake (handbrake.fr) — lo abres, arrastras el video, y le das al boton verde de exportar, sin tocar nada mas.\n\n' +
+              '¿Subir de todas formas?'
+          );
+          if (!seguir) {
+            setProgreso(0);
+            continue;
+          }
+        }
+        setProgreso(0);
+      }
+
       const formData = new FormData();
       formData.append('archivo', file);
       formData.append('nombre', file.name);
@@ -82,7 +101,11 @@ export default function ContenidosPage() {
       >
         <p className="text-slate-300 font-medium">Arrastra imagenes o videos aqui, o haz clic para elegir</p>
         <p className="text-slate-500 text-xs mt-1">JPG, PNG, WEBP, GIF, MP4, WEBM, MOV</p>
-        {subiendo && <p className="text-brand-400 text-sm mt-3">Subiendo... {progreso}%</p>}
+        {subiendo && (
+          <p className="text-brand-400 text-sm mt-3">
+            {progreso < 0 ? 'Revisando video...' : `Subiendo... ${progreso}%`}
+          </p>
+        )}
         <input
           ref={inputRef}
           type="file"

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { contenidosApi } from '../api/resources';
 import { publicUrl } from '../lib/supabase';
+import { detectarCodecVideo, MENSAJE_CODEC_RIESGOSO } from '../lib/videoCodec';
 
 function detectarTipo(file) {
   if (file.type.startsWith('video/')) return 'video';
@@ -57,9 +58,29 @@ export default function ContenidosPage() {
     const total = files.length;
     let hechos = 0;
     for (const file of Array.from(files)) {
+      const tipo = detectarTipo(file);
+
+      if (tipo === 'video') {
+        setProgreso(-1); // muestra "Revisando video..." en vez de %
+        // eslint-disable-next-line no-await-in-loop
+        const codec = await detectarCodecVideo(file);
+        if (MENSAJE_CODEC_RIESGOSO[codec]) {
+          const seguir = window.confirm(
+            `⚠️ "${file.name}"\n\n${MENSAJE_CODEC_RIESGOSO[codec]}\n\n` +
+              'Te recomendamos arreglarlo antes de subirlo: es gratis y facil con el programa HandBrake (handbrake.fr) — lo abres, arrastras el video, y le das al boton verde de exportar, sin tocar nada mas.\n\n' +
+              '¿Subir de todas formas?'
+          );
+          if (!seguir) {
+            hechos += 1;
+            setProgreso(Math.round((hechos * 100) / total));
+            continue;
+          }
+        }
+      }
+
       try {
         // eslint-disable-next-line no-await-in-loop
-        await contenidosApi.subir(file, { nombre: file.name, tipo: detectarTipo(file), duracionSegundos: 10 });
+        await contenidosApi.subir(file, { nombre: file.name, tipo, duracionSegundos: 10 });
       } catch (err) {
         window.alert(`No se pudo subir "${file.name}": ${err.response?.data?.error || err.message}`);
       }
@@ -129,10 +150,12 @@ export default function ContenidosPage() {
             <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-brand-500 transition-all"
-                style={{ width: `${progreso}%` }}
+                style={{ width: progreso < 0 ? '100%' : `${progreso}%` }}
               />
             </div>
-            <p className="text-brand-400 text-xs mt-1.5">Subiendo... {progreso}%</p>
+            <p className="text-brand-400 text-xs mt-1.5">
+              {progreso < 0 ? 'Revisando video...' : `Subiendo... ${progreso}%`}
+            </p>
           </div>
         )}
         <input
