@@ -26,8 +26,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
-      <div className="w-full max-w-sm bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-700">
-        <h1 className="text-2xl font-bold text-white mb-1">58 Market TV</h1>
+      <div className="w-full max-w-sm bg-slate-800 rounded-2xl shadow-2xl shadow-black/50 p-8 border border-slate-700">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-xl font-black text-white shadow-lg shadow-brand-600/30">
+            58
+          </div>
+          <h1 className="text-2xl font-bold text-white">Market TV</h1>
+        </div>
         <p className="text-slate-400 mb-6">Ingresa a tu panel de cartelera</p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -35,7 +40,7 @@ export default function LoginPage() {
             <input
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-xl bg-slate-900 border border-slate-600 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
               required
               autoFocus
             />
@@ -46,7 +51,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-xl bg-slate-900 border border-slate-600 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
               required
             />
           </div>
@@ -54,7 +59,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={cargando}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg transition"
+            className="w-full bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl shadow-lg shadow-brand-600/20 transition"
           >
             {cargando ? 'Ingresando...' : 'Ingresar'}
           </button>

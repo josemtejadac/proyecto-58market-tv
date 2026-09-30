@@ -7,6 +7,28 @@ function detectarTipo(file) {
   return 'imagen';
 }
 
+function DuracionStepper({ valor, onChange }) {
+  return (
+    <div className="flex items-center gap-1 bg-slate-900 border border-slate-600 rounded-lg px-1">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(1, valor - 1))}
+        className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-brand-400 font-bold text-sm"
+      >
+        −
+      </button>
+      <span className="text-xs text-white w-9 text-center tabular-nums">{valor}s</span>
+      <button
+        type="button"
+        onClick={() => onChange(valor + 1)}
+        className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-brand-400 font-bold text-sm"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 export default function ContenidosPage() {
   const [contenidos, setContenidos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -62,10 +84,10 @@ export default function ContenidosPage() {
   }
 
   async function actualizarDuracion(c, duracion) {
+    setContenidos((prev) => prev.map((x) => (x.id === c.id ? { ...x, duracion_segundos: duracion } : x)));
     setEstadoGuardado((prev) => ({ ...prev, [c.id]: 'guardando' }));
     try {
-      const { data } = await contenidosApi.actualizar(c.id, { duracion_segundos: duracion });
-      setContenidos((prev) => prev.map((x) => (x.id === c.id ? data : x)));
+      await contenidosApi.actualizar(c.id, { duracion_segundos: duracion });
       setEstadoGuardado((prev) => ({ ...prev, [c.id]: 'guardado' }));
       setTimeout(() => {
         setEstadoGuardado((prev) => ({ ...prev, [c.id]: undefined }));
@@ -79,7 +101,12 @@ export default function ContenidosPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Contenidos</h1>
-        <p className="text-slate-400 text-sm">Imagenes y videos disponibles para tus playlists</p>
+        <p className="text-slate-400 text-sm">
+          Las fotos y videos que subas aqui quedan disponibles para armar tus{' '}
+          <span className="text-brand-400 font-medium">Playlists</span>. Para una imagen puedes
+          elegir cuantos segundos se muestra; un video se reproduce completo y pasa solo al
+          siguiente.
+        </p>
       </div>
 
       <div
@@ -90,13 +117,24 @@ export default function ContenidosPage() {
         onDragLeave={() => setArrastrando(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
-        className={`mb-6 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition ${
-          arrastrando ? 'border-brand-500 bg-brand-500/10' : 'border-slate-700 hover:border-slate-500'
+        className={`mb-6 border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition ${
+          arrastrando ? 'border-brand-500 bg-brand-500/10' : 'border-slate-700 hover:border-brand-500/60 hover:bg-slate-800/40'
         }`}
       >
+        <div className="text-3xl mb-2">📤</div>
         <p className="text-slate-300 font-medium">Arrastra imagenes o videos aqui, o haz clic para elegir</p>
         <p className="text-slate-500 text-xs mt-1">JPG, PNG, WEBP, GIF, MP4, WEBM, MOV</p>
-        {subiendo && <p className="text-brand-400 text-sm mt-3">Subiendo... {progreso}%</p>}
+        {subiendo && (
+          <div className="mt-4 max-w-xs mx-auto">
+            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-500 transition-all"
+                style={{ width: `${progreso}%` }}
+              />
+            </div>
+            <p className="text-brand-400 text-xs mt-1.5">Subiendo... {progreso}%</p>
+          </div>
+        )}
         <input
           ref={inputRef}
           type="file"
@@ -114,7 +152,10 @@ export default function ContenidosPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {contenidos.map((c) => (
-            <div key={c.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+            <div
+              key={c.id}
+              className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden hover:border-brand-500/50 transition"
+            >
               <div className="aspect-video bg-black flex items-center justify-center">
                 {c.tipo === 'video' ? (
                   <video src={publicUrl(c.storage_path)} className="w-full h-full object-cover" muted />
@@ -126,29 +167,27 @@ export default function ContenidosPage() {
                 <p className="text-sm text-white truncate" title={c.nombre}>
                   {c.nombre}
                 </p>
-                <p className="text-xs text-slate-500 mb-2 capitalize">{c.tipo}</p>
+                <p className="text-xs text-slate-500 mb-2.5 capitalize flex items-center gap-1">
+                  <span>{c.tipo === 'video' ? '🎬' : '🖼️'}</span> {c.tipo}
+                </p>
                 {c.tipo === 'imagen' && (
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <input
-                      type="number"
-                      min={1}
-                      defaultValue={c.duracion_segundos}
-                      onBlur={(e) => actualizarDuracion(c, Number(e.target.value) || 10)}
-                      className="w-16 text-xs rounded bg-slate-900 border border-slate-600 px-2 py-1 text-white"
-                    />
-                    <span className="text-xs text-slate-500">seg.</span>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <DuracionStepper valor={c.duracion_segundos ?? 10} onChange={(v) => actualizarDuracion(c, v)} />
                     {estadoGuardado[c.id] === 'guardando' && (
                       <span className="text-xs text-slate-400">Guardando...</span>
                     )}
                     {estadoGuardado[c.id] === 'guardado' && (
-                      <span className="text-xs text-green-400">Guardado ✓</span>
+                      <span className="text-xs text-brand-400">Guardado ✓</span>
                     )}
                     {estadoGuardado[c.id] === 'error' && (
-                      <span className="text-xs text-red-400">Error al guardar</span>
+                      <span className="text-xs text-red-400">Error</span>
                     )}
                   </div>
                 )}
-                <button onClick={() => eliminar(c)} className="text-xs text-red-400 hover:text-red-300">
+                <button
+                  onClick={() => eliminar(c)}
+                  className="text-xs font-medium text-red-400 hover:text-red-300 transition"
+                >
                   Eliminar
                 </button>
               </div>
