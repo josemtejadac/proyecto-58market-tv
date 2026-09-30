@@ -5,13 +5,14 @@ José Manuel Tejada. Muestra promociones/publicidad en varias Smart TVs (Android
 a la WiFi local de la tienda. Todo corre en un PC dentro del local, sin depender de internet
 para el uso diario.
 
-## Estado actual (última sesión: 2026-09-22/23)
+## Estado actual (última sesión: 2026-09-30)
 
-El sistema está **construido, probado end-to-end y funcionando** con al menos una TV real
-emparejada y mostrando contenido. Repo: https://github.com/josemtejadac/proyecto-58market-tv
-(rama `main`, pública).
+Hay **dos arquitecturas en paralelo** en este repo — no confundirlas:
 
-### Las 3 partes
+### A) Version LOCAL (en uso real, la que se va a instalar en la tienda)
+
+Construida, probada end-to-end y funcionando con al menos una TV real emparejada y mostrando
+contenido. Repo: https://github.com/josemtejadac/proyecto-58market-tv (rama `main`, pública).
 
 1. **`backend/`** — Node/Express + PostgreSQL + Socket.io. Corre en Docker (`docker-compose.yml`
    en la raíz). Sirve la API en el puerto 4000.
@@ -20,6 +21,36 @@ emparejada y mostrando contenido. Repo: https://github.com/josemtejadac/proyecto
    (ver "Decisiones" abajo).
 3. **`player-app/`** — Flutter, para Android TV. El APK universal (todas las arquitecturas)
    se genera con `flutter build apk --release` en `player-app/build/app/outputs/flutter-apk/`.
+
+Esta es la version que el usuario va a instalar físicamente en la PC y las TVs de la tienda
+(ver `SETUP.md`). **Es la version en uso real hasta que la de Supabase este probada en un
+dispositivo real y el usuario decida migrar.**
+
+### B) Version NUBE / Supabase (experimental, en construcción)
+
+El usuario tiene Supabase Pro y pidió explorar una arquitectura sin backend propio: el panel y
+la app de la TV hablan **directo con Supabase** (Postgres + Storage + Realtime + Auth), sin
+pasar por Express/Socket.io ni por una PC prendida en la tienda.
+
+4. **`panel-web-cloud/`** — Copia de `panel-web/` adaptada a Supabase. Probado end-to-end
+   (login, RLS, pairing) contra la base real via curl. Compila limpio.
+5. **`player-app-cloud/`** — Copia de `player-app/` adaptada a Supabase (`applicationId`
+   distinto: `com.market58tv.signage_player_cloud`, para poder instalarla junto a la version
+   local en la misma TV sin pisarla). Compila limpio y pasa `flutter analyze`, pero **todavía
+   no se probó en un dispositivo real** (la TV de pruebas no estaba alcanzable por red la
+   última vez que se intentó).
+6. **Base de datos**: proyecto Supabase compartido "Base de datos Proyectos varios"
+   (`project_id: wiuuzsiiaagqldtxfouj`, org "SpotGo", plan Pro), tablas con prefijo
+   `market58_` (NO es un proyecto Supabase aparte — así no cuesta nada extra del plan, ver mas
+   abajo). Bucket de Storage: `market58-contenidos`. Usuario admin en Supabase Auth: email
+   `+58market@58market.local`, clave `58market2027` (pedida explícitamente por el usuario).
+7. El usuario mencionó que **esto se va a mover a otro proyecto/repo más adelante** — por ahora
+   vive junto a la version local en el mismo repo.
+
+**Antes de dar por "lista" la version B**: falta probarla en una TV real de punta a punta
+(emparejar, subir contenido, verificar que se reproduce), y decidir con el usuario si/cuándo
+migrar la operación real de la tienda a esta arquitectura. No asumir que ya reemplazó a la
+version A sin confirmar con el usuario.
 
 ### Decisiones importantes tomadas (no revertir sin preguntar)
 
@@ -58,6 +89,14 @@ emparejada y mostrando contenido. Repo: https://github.com/josemtejadac/proyecto
 - La primera TV de prueba (marca "UnionTV") es de **32 bits (armeabi-v7a)**, no arm64. El APK
   universal (`flutter build apk --release`, sin `--target-platform`) sirve para cualquier
   arquitectura — usar siempre ese para distribuir, no el de una sola arquitectura.
+
+### Costo de la version Supabase (por si el usuario pregunta de nuevo)
+
+Con 40 TVs corriendo 8h/día, usando el proyecto compartido existente (no uno nuevo): **$0
+extra** sobre el Pro que ya paga. Conexiones Realtime (40) muy por debajo del límite de 500
+incluidas; mensajes, storage y egress también muy por debajo de los límites Pro (5M msgs,
+100GB storage, 250GB egress). Lo único que sí generaría costo es un proyecto Supabase *nuevo*
+(~$10/mes extra) — por eso se uso el proyecto compartido con prefijo de tablas, no uno nuevo.
 
 ## Cómo ayudar en una sesión nueva
 
