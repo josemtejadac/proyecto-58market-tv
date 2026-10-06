@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { contenidosApi } from '../api/resources';
 import { publicUrl } from '../lib/supabase';
 import { detectarCodecVideo, MENSAJE_CODEC_RIESGOSO } from '../lib/videoCodec';
+import { comprimirImagen, videoMuyPesado, MAX_VIDEO_MB } from '../lib/compresion';
 
 function detectarTipo(file) {
   if (file.type.startsWith('video/')) return 'video';
@@ -57,8 +58,25 @@ export default function ContenidosPage() {
     setSubiendo(true);
     const total = files.length;
     let hechos = 0;
-    for (const file of Array.from(files)) {
+    for (let file of Array.from(files)) {
       const tipo = detectarTipo(file);
+
+      if (tipo === 'video' && videoMuyPesado(file)) {
+        window.alert(
+          `"${file.name}" pesa demasiado para subirlo (maximo ${MAX_VIDEO_MB} MB).\n\n` +
+            'Comprimelo primero con HandBrake (gratis, handbrake.fr): abrilo, elegi el preset "Fast 1080p30", y exporta. ' +
+            'Con eso un video de 30 segundos queda en unos 10-20 MB.'
+        );
+        hechos += 1;
+        setProgreso(Math.round((hechos * 100) / total));
+        continue;
+      }
+
+      if (tipo === 'imagen') {
+        setProgreso(-1);
+        // eslint-disable-next-line no-await-in-loop
+        file = await comprimirImagen(file);
+      }
 
       if (tipo === 'video') {
         setProgreso(-1); // muestra "Revisando video..." en vez de %

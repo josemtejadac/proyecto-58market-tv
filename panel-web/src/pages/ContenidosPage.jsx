@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { contenidosApi } from '../api/resources';
 import { getApiUrl } from '../config';
 import { detectarCodecVideo, MENSAJE_CODEC_RIESGOSO } from '../lib/videoCodec';
+import { comprimirImagen, videoMuyPesado, MAX_VIDEO_MB } from '../lib/compresion';
 
 export default function ContenidosPage() {
   const [contenidos, setContenidos] = useState([]);
@@ -27,7 +28,17 @@ export default function ContenidosPage() {
 
   const subirArchivos = useCallback(async (files) => {
     setSubiendo(true);
-    for (const file of Array.from(files)) {
+    for (let file of Array.from(files)) {
+      if (file.type.startsWith('video/') && videoMuyPesado(file)) {
+        window.alert(
+          `"${file.name}" pesa demasiado para subirlo (maximo ${MAX_VIDEO_MB} MB).\n\n` +
+            'Comprimelo primero con HandBrake (gratis, handbrake.fr): abrilo, elegi el preset "Fast 1080p30", y exporta.'
+        );
+        continue;
+      }
+      if (file.type.startsWith('image/')) {
+        file = await comprimirImagen(file);
+      }
       if (file.type.startsWith('video/')) {
         setProgreso(-1);
         // eslint-disable-next-line no-await-in-loop
